@@ -1,10 +1,11 @@
 package app;
 
-import app.View.EditorView;
+import app.Controller.EditorController;
+
 
 public class TextEditor {
 
     public static void main(String[] args) {
-        EditorView v = new EditorView();
+        EditorController e = new EditorController();
     }
 }
