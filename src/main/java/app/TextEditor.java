@@ -1,9 +1,9 @@
 package app;
 
-import app.Controller.EditorController;
+import app.controller.EditorController;
 
 
-public class TextEditor {
+public final class TextEditor {
 
     public static void main(String[] args) {
         EditorController e = new EditorController();
