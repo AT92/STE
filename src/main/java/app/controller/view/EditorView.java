@@ -10,7 +10,7 @@ import java.util.Scanner;
 public class EditorView extends JFrame {
     protected JButton exitButton = new JButton("Programm beenden");
     protected JButton openButton = new JButton("Datei laden");
-    public JButton saveButton = new JButton("Speichern");
+    protected JButton saveButton = new JButton("Speichern");
     protected JButton saveAES = new JButton("Save file with AES");
     protected JButton openAES = new JButton("Open AES encrypted file");
     protected JTextArea textArea = new JTextArea(20, 100);
@@ -62,10 +62,18 @@ public class EditorView extends JFrame {
         });
 
         openAES.addActionListener(al -> {
-            Scanner scan = new Scanner(System.in);
-            String s = scan.next();
-            controller.openAES(s);
+            controller.openAES();
         });
+    }
+
+    public String askForInput(String text) {
+        return JOptionPane.showInputDialog(text);
+    }
+
+    public void informUser(String text) {
+        JTextArea message = new JTextArea(text);
+        message.setEditable(false);
+        JOptionPane.showMessageDialog(null, message, "Important informaton!", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void setEditorContent(String content) {

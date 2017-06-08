@@ -3,10 +3,10 @@ package app.data;
 
 import java.io.*;
 
-public class ContentManager {
+public class FileManager {
     private final File file;
 
-    public ContentManager(File file) throws FileNotFoundException {
+    public FileManager(File file) throws FileNotFoundException {
         this.file = file;
     }
 

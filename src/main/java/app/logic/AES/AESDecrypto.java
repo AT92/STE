@@ -1,12 +1,9 @@
 package app.logic.AES;
 
 
-import app.logic.Utils;
-
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -16,8 +13,9 @@ public final class AESDecrypto {
     private final SecretKey key;
 
     public AESDecrypto(String key) {
-        assert key.length() == 16 || key.length() == 24 || key.length() == 32;
-        this.key = new SecretKeySpec(Base64.getDecoder().decode(key), "AES");
+        byte[] keyB = Base64.getDecoder().decode(key);
+        assert keyB.length == 16 || keyB.length == 24 || keyB.length == 32;
+        this.key = new SecretKeySpec(keyB, "AES");
     }
 
     public String decryptAES(String content) throws NoSuchAlgorithmException, NoSuchProviderException,

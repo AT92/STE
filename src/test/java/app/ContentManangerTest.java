@@ -1,7 +1,7 @@
 package app;
 
 import app.controller.EditorController;
-import app.data.ContentManager;
+import app.data.FileManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -26,7 +26,7 @@ public class ContentManangerTest {
     public void testGetContentOutOfFile() throws IOException {
         ClassLoader cl = getClass().getClassLoader();
         File testFile = new File(cl.getResource("TestFile").getFile());
-        ContentManager cm = new ContentManager(testFile);
+        FileManager cm = new FileManager(testFile);
         assertEquals("Simple Text with\nlinebreaks", cm.getContentOutOfFile());
     }
 
@@ -34,7 +34,7 @@ public class ContentManangerTest {
     public void testWriteContentToFile() throws IOException {
         ClassLoader cl = getClass().getClassLoader();
         File testFile = new File(cl.getResource("TestFile").getFile());
-        ContentManager cm = new ContentManager(testFile);
+        FileManager cm = new FileManager(testFile);
         String content = cm.getContentOutOfFile();
         cm.writeContentToFile(content);
         assertEquals(content, cm.getContentOutOfFile());

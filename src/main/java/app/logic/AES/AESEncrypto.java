@@ -1,14 +1,10 @@
 package app.logic.AES;
 
-import app.logic.Utils;
-
 import javax.crypto.*;
-import javax.crypto.spec.*;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
 import java.util.Base64;
 
 
@@ -16,12 +12,13 @@ public final class AESEncrypto {
     private final SecretKey key;
 
     public AESEncrypto(int keyLength) throws NoSuchProviderException, NoSuchAlgorithmException {
-        assert keyLength == 128 || keyLength == 192 || keyLength == 256;
+        if (keyLength != 128 && keyLength != 192 && keyLength != 256) {
+            throw new IllegalStateException("Wrong keysize");
+        }
         KeyGenerator keyGen = KeyGenerator.getInstance("AES", "BC");
         keyGen.init(keyLength);
         key = keyGen.generateKey();
     }
-
 
     public String encryptAES(String content) throws NoSuchAlgorithmException, NoSuchProviderException,
                                                     NoSuchPaddingException, InvalidKeyException, ShortBufferException,
