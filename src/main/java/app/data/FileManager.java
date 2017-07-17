@@ -3,7 +3,7 @@ package app.data;
 
 import java.io.*;
 
-public class FileManager {
+public final class FileManager {
     private final File file;
 
     public FileManager(File file) throws FileNotFoundException {
