@@ -1,9 +1,19 @@
 package app;
 
 
+import app.model.Configuration;
+import app.model.Decryptor;
+import app.model.Encryptor;
+import app.model.cryptofactories.DecryptorFactory;
+import app.model.cryptofactories.EncryptorFactory;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.LinkedList;
 import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 public class UtilsForTest {
     private static String createRandomBlockedText() {
@@ -18,7 +28,7 @@ public class UtilsForTest {
         return RandomStringUtils.randomAscii(textSize);
     }
 
-    public static String getRandomPadding() {
+    private static String getRandomPadding() {
         Random r = new Random();
         int option = r.nextInt() % 3;
         switch(option) {
@@ -29,7 +39,7 @@ public class UtilsForTest {
         }
     }
 
-    public static String randomText(String padding) {
+    private static String randomText(String padding) {
         String test = "";
         if (padding.equals("NoPadding")) {
             test = UtilsForTest.createRandomBlockedText();
@@ -37,5 +47,33 @@ public class UtilsForTest {
             test = UtilsForTest.createRandomNotBlockedText();
         }
         return test;
+    }
+
+
+
+    public static boolean testConfig(Configuration config, int times) {
+        for (int i = 0; i < times; i++) {
+            String padding = UtilsForTest.getRandomPadding();
+            config.addSetting("Padding", padding);
+            String randomText = UtilsForTest.randomText(padding);
+            String decryptedText = encryptAndDecrypt(randomText, config);
+            if (!randomText.equals(decryptedText)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String encryptAndDecrypt(String randomText, Configuration config) {
+        try {
+            Encryptor encryptor = EncryptorFactory.getEncryptor(config);
+            String encContent = encryptor.encryptAsString(randomText);
+            config = encryptor.updateConfiguration(config);
+            Decryptor decryptor = DecryptorFactory.getDecryptor(config);
+            return decryptor.decryptAsString(encContent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 }

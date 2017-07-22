@@ -1,25 +1,18 @@
 package app.controller;
 
 import app.data.FileManager;
-import app.controller.view.EditorView;
-import app.logic.AES.CBC.AESCBCDecryptor;
-import app.logic.AES.CBC.AESCBCEncryptor;
-import app.logic.AES.ECB.AESECBDecryptor;
-import app.logic.AES.ECB.AESECBEncryptor;
-import app.logic.DES.ECB.DESECBDecryptor;
-import app.logic.DES.ECB.DESECBEncryptor;
-import app.logic.Decryptor;
-import app.logic.Encryptor;
-
+import app.model.*;
+import app.model.cryptofactories.DecryptorFactory;
+import app.model.cryptofactories.EncryptorFactory;
+import app.view.EditorView;
 import javax.swing.*;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
  * This class is the controller of the editor.
  * It delegate user actions to the write methods and functions.
- * It informs user and controls the view according to the binded logic layer.
+ * It informs user and controls the view according to the binded model layer.
  *
  * @author Anfrej Tihonov
  * @version 1.0
@@ -99,12 +92,12 @@ public class EditorController {
     }
 
     /**
-     * This method lets the user to choose between three key sizes for the AES Encryption.
-     * @return the size of the AES Key.
+     * This method lets the user to choose between three key sizes for the aes Encryption.
+     * @return the size of the aes Key.
      */
     private int chooseKeysize() {
         String[] options = new String[] {"128 Bit", "192 Bit", "256 Bit"};
-        String option = view.createOptionDialog(options, "Keysize selection", "Select the AES keysize!");
+        String option = view.createOptionDialog(options, "Keysize selection", "Select the aes keysize!");
         return Integer.parseInt(option.substring(0, 3));
     }
 
@@ -112,85 +105,81 @@ public class EditorController {
      * This method lets the user to choose between three block modi for the encryption.
      * @return the selected block modi.
      */
-    private String chooseBlockModus() {
-        String[] options = new String[] {"ECB", "CBC"};
-        return view.createOptionDialog(options, "Block modus selection", "Select the block modus");
+    private String chooseBlockModus(String type) {
+        if (type.equals("AES")) {
+            return view.createOptionDialog(new String[] {"ECB", "CBC", "CTS", "OFB", "GCM"}, "Block modus selection", "Select the block modus");
+        } else {
+            return view.createOptionDialog(new String[] {"ECB", "CBC", "CTS", "OFB"}, "Block modus selection", "Select the block modus");
+        }
     }
 
     public void saveAES() {
-        String padding = choosePadding();
-        if (padding.equals("NoPadding") && view.getEditorContent().length() % 16 != 0) {
-            JOptionPane.showMessageDialog(null, "The textsize must be a multiple of 16 for this encryption!");
-            return;
-        }
-        try {
-            String blockMode = chooseBlockModus();
-            int keyLength = chooseKeysize();
-            Encryptor enc;
-            switch (blockMode) {
-                case "ECB": enc = new AESECBEncryptor(keyLength, padding);
-                            break;
-                case "CBC": enc = new AESCBCEncryptor(keyLength, padding);
-                            break;
-                default: throw new IllegalArgumentException();
-            }
-            String encContent = enc.encryptAsString(view.getEditorContent());
-            if (saveFile(encContent)) {
-                view.informUser("This is the " + keyLength + " bit long key for this document:\n" + enc.getKeyAsString());
-            } else {
-                view.informUser("The file could not be saved!");
-            }
-        } catch (Exception e) {
-            view.informUser("Error:" + e.getMessage());
-        }
-    }
-
-    public String openAES() {
-        String encContent = openFile();
-        try {
-            String key = view.askForInput("Please input the key for this file below:");
-            String blockMode = chooseBlockModus();
-            String padding = choosePadding();
-            Decryptor decryptor;
-            switch (blockMode) {
-                case "ECB": decryptor = new AESECBDecryptor(padding, key);
-                    break;
-                case "CBC": decryptor = new AESCBCDecryptor(padding, key);
-                    break;
-                default: throw new IllegalArgumentException();
-            }
-            return decryptor.decryptAsString(encContent);
-        } catch (Exception e) {
-            view.informUser("Error:" + e.getMessage());
-        }
-        return "";
+        Configuration config = new Configuration();
+        config.addSetting("Type", "AES");
+        prepareConfiguration(config);
     }
 
     public void saveDES() {
-        String padding = choosePadding();
-        if (padding.equals("NoPadding") && view.getEditorContent().length() % 8 != 0) {
-            view.informUser("The textsize must be a multiple of 8 for this encryption!");
-            return;
-        }
+        Configuration config = new Configuration();
+        config.addSetting("Type", "DES");
+        prepareConfiguration(config);
+    }
+
+    private void performSave(Configuration config) {
         try {
-            Encryptor enc = new DESECBEncryptor(padding);
-            String encContent = enc.encryptAsString(view.getEditorContent());
+            Encryptor encryptor = EncryptorFactory.getEncryptor(config);
+            String encContent = encryptor.encryptAsString(view.getEditorContent());
+            config = encryptor.updateConfiguration(config);
             if (saveFile(encContent)) {
-                view.informUser("This is the key for this document:\n" + enc.getKeyAsString());
+                view.informUser("Save the configuration file!");
+                if (saveFile(config.toString())) {
+                    view.informUser("Your file was saved and the configuration file was created!");
+                }
             }
         } catch (Exception e) {
             view.informUser("Error:" + e.getMessage());
         }
     }
 
-    public String openDES() {
+    private void prepareConfiguration(Configuration config) {
+        String blockModus;
+        if (config.getSetting("Type").equals("AES")) {
+            config.addSetting("Keysize", String.valueOf(chooseKeysize()));
+            blockModus = chooseBlockModus("AES");
+        } else {
+            blockModus = chooseBlockModus("DES");
+        }
+        config.addSetting("BlockModus", blockModus);
+        if (!blockModus.equals("OFB") && !blockModus.equals("GCM")) {
+            String padding = choosePadding();
+            int blockSize = 0;
+            if (config.getSetting("Type").equals("AES")) {
+                blockSize = 16;
+            } else {
+                assert !blockModus.equals("GCM");
+                blockSize = 8;
+            }
+            if (padding.equals("NoPadding") && view.getEditorContent().length() % blockSize != 0) {
+                view.informUser("You can not use NoPadding, with " + blockModus + " and this text length!");
+                return;
+            }
+            config.addSetting("Padding", padding);
+        } else {
+            config.addSetting("Padding", "NoPadding");
+        }
+        performSave(config);
+    }
+
+
+    public String openEncryptedFile() {
         String encContent = openFile();
-        String key = view.askForInput("Please input the key for this file below:");
         try {
-            Decryptor decryptor = new DESECBDecryptor(choosePadding(), key);
+            view.informUser("Select the configuration file for this decrypted text!");
+            Configuration configuration = new Configuration(openFile());
+            Decryptor decryptor = DecryptorFactory.getDecryptor(configuration);
             return decryptor.decryptAsString(encContent);
         } catch (Exception e) {
-            e.printStackTrace();
+            view.informUser("Error:" + e.getMessage());
         }
         return "";
     }
